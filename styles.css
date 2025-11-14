@@ -1,0 +1,96 @@
+:root {
+  --pixel: 12px;
+  --cols: calc(100vw / var(--pixel));
+  --rows: calc(100vh / var(--pixel));
+  font-family: 'Press Start 2P', cursive;
+  background: #f0f0f0;
+  overflow: hidden;
+}
+
+body, html { margin: 0; height: 100%; }
+.screen { display: none; height: 100vh; flex-direction: column; justify-content: center; align-items: center; position: relative; }
+.screen.active { display: flex; }
+
+h1, h2 { margin: 0.5rem 0; font-size: 1.5rem; color: #333; }
+.guide { width: 150px; height: auto; margin-bottom: 1rem; }
+.guide.small { width: 60px; }
+
+form { display: flex; flex-direction: column; gap: 1rem; }
+input[type=text], input[type=password] {
+  padding: 0.5rem;
+  font-size: 0.9rem;
+  font-family: inherit;
+}
+label { font-size: 0.7rem; display: flex; align-items: center; gap: 0.5rem; }
+button {
+  padding: 0.8rem 1.5rem;
+  font-family: inherit;
+  font-size: 0.9rem;
+  background: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+button:hover { background: #45a049; }
+
+.lang {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  padding: 0.5rem;
+  font-size: 1rem;
+}
+
+.wallet p { margin: 0.5rem 0; font-size: 0.8rem; }
+.icon {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  margin-right: 0.5rem;
+}
+.icon.block { background: #555; }
+.icon.blocky { border: 1px dashed #333; }
+
+#miningScreen { position: relative; }
+#grid {
+  display: grid;
+  grid-template-columns: repeat(50, 12px);
+  grid-template-rows: repeat(50, 12px);
+  gap: 0;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+.cell {
+  width: var(--pixel);
+  height: var(--pixel);
+  background: #cccccc80;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.cell:hover { background: #ccc; }
+.cell.filled { background: #4CAF50; }
+.cell.highlight { outline: 2px solid yellow; }
+
+.ctx {
+  position: absolute;
+  background: rgba(255,255,255,0.9);
+  border-radius: 4px;
+  padding: 0.5rem;
+  font-size: 0.7rem;
+  box-shadow: 0 0 8px rgba(0,0,0,0.2);
+  z-index: 100;
+}
+.hidden { display: none; }
+
+#progress, #counters {
+  position: absolute;
+  font-size: 0.7rem;
+  background: rgba(255,255,255,0.7);
+  padding: 0.2rem 0.4rem;
+  border-radius: 3px;
+  pointer-events: none;
+  z-index: 50;
+}

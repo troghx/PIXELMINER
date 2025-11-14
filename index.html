@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Pixel Miner</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet" />
+</head>
+<body>
+
+  <!-- LOGIN -->
+  <section id="loginScreen" class="screen active">
+    <h1 id="loginTitle">Pixel Miner</h1>
+    <img id="guideChar" class="guide" src="guide_character_normal.png" alt="Guía" />
+    <form id="loginForm">
+      <input type="text" id="userField" placeholder="Usuario" required />
+      <input type="password" id="passField" placeholder="Contraseña" required />
+      <label>
+        <input type="checkbox" id="showPass" /> <span id="showPassText">Mostrar contraseña</span>
+      </label>
+      <button type="submit" id="loginBtn">Iniciar sesión</button>
+    </form>
+    <button id="langBtn" class="lang">🌐</button>
+  </section>
+
+  <!-- WALLET -->
+  <section id="walletScreen" class="screen">
+    <h1 id="walletTitle">Pixel Miner</h1>
+    <img id="guideCharW" class="guide small" src="guide_character_normal.png" alt="Guía" />
+    <div class="wallet">
+      <h2 id="walletLabel">Cartera</h2>
+      <p><span class="icon block"></span> <span id="totalBlocksText">Bloques minados</span>: <span id="totalBlocks">0</span></p>
+      <p><span class="icon blocky"></span> <span id="blockitsText">Bloqcoins</span>: <span id="blockits">0</span></p>
+      <button id="mineBtn">MINAR</button>
+    </div>
+    <button id="langBtnW" class="lang">🌐</button>
+  </section>
+
+  <!-- MINING -->
+  <section id="miningScreen" class="screen">
+    <div id="grid"></div>
+    <div id="ctxMenu" class="ctx hidden"></div>
+    <div id="progress">0.00%</div>
+    <div id="counters">Bloque: 0 | Bloqcoins: 0</div>
+  </section>
+
+  <script src="script.js"></script>
+</body>
+</html>
