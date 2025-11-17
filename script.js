@@ -9,8 +9,8 @@ const BLOQCOINS_PER_BLOCK = 100;
 let lang = 'es';
 let bloqcoins = 0;
 let miningArea = 50;
-let totalBlocksMined = 0;
 let tempFilled = 0;
+let totalVisibleCells = miningArea * miningArea;
 
 const txt = {
   es: {
@@ -83,6 +83,7 @@ function buildGrid() {
   const grid = $('#grid');
   grid.innerHTML = '';
   tempFilled = 0;
+  totalVisibleCells = miningArea * miningArea;
   $$('.cell.highlight').forEach(c => c.classList.remove('highlight'));
 
   const startCol = Math.floor((COLS - miningArea) / 2);
@@ -94,10 +95,13 @@ function buildGrid() {
       cell.className = 'cell';
       const visible = r >= startRow && r < startRow + miningArea && c >= startCol && c < startCol + miningArea;
       cell.style.display = visible ? 'block' : 'none';
+      cell.dataset.visible = visible ? '1' : '0';
       cell.onclick = () => clickPixel(cell);
       grid.appendChild(cell);
     }
   }
+
+  updateProgress();
 }
 
 function clickPixel(cell) {
@@ -109,12 +113,11 @@ function clickPixel(cell) {
 }
 
 function checkComplete() {
-  const filled = $$('#grid .cell.filled').length;
-  const totalVisible = $$('#grid .cell[style="display: block;"]').length;
-  
-  if (filled === totalVisible) {
+  const filled = $$('#grid .cell.filled[data-visible="1"]').length;
+
+  if (filled === totalVisibleCells) {
     $$('#grid .cell').forEach(c => {
-      if (c.style.display === 'block') c.classList.add('highlight');
+      if (c.dataset.visible === '1') c.classList.add('highlight');
     });
   }
 }
@@ -125,10 +128,9 @@ window.addEventListener('contextmenu', e => {
   if (!miningActive) return;
   e.preventDefault();
 
-  const filled = $$('#grid .cell.filled').length;
-  const totalVisible = $$('#grid .cell[style="display: block;"]').length;
-  
-  if (filled === totalVisible) {  // Cambiado a totalVisible
+  const filled = $$('#grid .cell.filled[data-visible="1"]').length;
+
+  if (filled === totalVisibleCells) {
     const ctx = $('#ctxMenu');
     ctx.classList.remove('hidden');
     ctx.style.left = e.pageX + 'px';
@@ -143,7 +145,6 @@ window.addEventListener('contextmenu', e => {
 window.mineArea = () => {
   const reward = miningArea * miningArea;
   bloqcoins += reward;
-  totalBlocksMined = Math.floor(bloqcoins / BLOQCOINS_PER_BLOCK);
   tempFilled = 0;
   $$('.cell').forEach(c => c.classList.remove('filled', 'highlight'));
   $('#ctxMenu').classList.add('hidden');
@@ -159,19 +160,22 @@ window.showShop = () => {
     miningArea = next;
     buildGrid();
   } else {
-    alert('Necesitas ' + cost + ' bloqcoins');
+    const msg = lang === 'es'
+      ? `Necesitas ${cost} bloqcoins` 
+      : `You need ${cost} bloqcoins`;
+    alert(msg);
   }
   $('#ctxMenu').classList.add('hidden');
 };
 
 // PROGRESS + COUNTERS
 function updateProgress() {
-  const totalBlocksMined = Math.floor(bloqcoins / BLOQCOINS_PER_BLOCK);
-  const percent = ((tempFilled / (miningArea * miningArea)) * 100).toFixed(2);
-  $('#totalBlocks').textContent = totalBlocksMined;
+  const minedBlocks = Math.floor(bloqcoins / BLOQCOINS_PER_BLOCK);
+  const percent = ((tempFilled / totalVisibleCells) * 100).toFixed(2);
+  $('#totalBlocks').textContent = minedBlocks;
   $('#blockits').textContent = bloqcoins;
   $('#progress').textContent = percent + '%';
-  $('#counters').textContent = `${txt[lang].blocksText}: ${totalBlocksMined} | ${txt[lang].blockitsText}: ${bloqcoins}`;
+  $('#counters').textContent = `${txt[lang].blocksText}: ${minedBlocks} | ${txt[lang].blockitsText}: ${bloqcoins}`;
 }
 
 document.addEventListener('mousemove', e => {
@@ -192,7 +196,7 @@ function updateLang() {
   $('#loginBtn').textContent = txt[lang].loginBtn;
   $('#mineBtn').textContent = txt[lang].mineBtn;
   $('#walletLabel').textContent = txt[lang].walletLabel;
-  $('#totalBlocksText').textContent = lang === 'es' ? 'Bloques minados' : 'Blocks mined';
+  $('#totalBlocksText').textContent = txt[lang].blocksText;
   $('#blockitsText').textContent = txt[lang].blockitsText;
   $('#showPassText').textContent = txt[lang].showPassText;
 }
@@ -203,4 +207,5 @@ document.addEventListener('keydown', e => {
 });
 
 // INIT
+
 updateLang();
