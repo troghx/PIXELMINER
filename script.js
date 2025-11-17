@@ -5,12 +5,16 @@ const COLS = 50;
 const ROWS = 50;
 const PIXEL = 12;
 const BLOQCOINS_PER_BLOCK = 100;
+const BLOQCOIN_PER_PIXEL = 1 / 80; // 4 pixels = 0.05 bloqcoins
 
 let lang = 'es';
 let bloqcoins = 0;
 let miningArea = 50;
 let tempFilled = 0;
 let totalVisibleCells = miningArea * miningArea;
+let activeSquares = [];
+let visibleStart = { row: 0, col: 0 };
+let selectedSquare = null;
 
 const txt = {
   es: {
@@ -22,6 +26,7 @@ const txt = {
     blocksText: 'Bloques',
     blockitsText: 'Bloqcoins',
     showPassText: 'Mostrar contraseña',
+    mine: 'MINAR',
     wrong: 'Usuario o contraseña incorrectos',
     mineArea: 'Minar área',
     shop: 'Tienda',
@@ -36,6 +41,7 @@ const txt = {
     blocksText: 'Blocks',
     blockitsText: 'Bloqcoins',
     showPassText: 'Show password',
+    mine: 'MINE',
     wrong: 'Incorrect username or password',
     mineArea: 'Mine area',
     shop: 'Shop',
@@ -51,6 +57,10 @@ const screens = {
 function go(to) {
   $$('.screen').forEach(s => s.classList.remove('active'));
   screens[to].classList.add('active');
+}
+
+function getCell(row, col) {
+  return $('#grid').children[row * COLS + col];
 }
 
 // LOGIN
@@ -84,10 +94,13 @@ function buildGrid() {
   grid.innerHTML = '';
   tempFilled = 0;
   totalVisibleCells = miningArea * miningArea;
+  activeSquares = [];
   $$('.cell.highlight').forEach(c => c.classList.remove('highlight'));
+  $$('.cell.square-highlight').forEach(c => c.classList.remove('square-highlight'));
 
   const startCol = Math.floor((COLS - miningArea) / 2);
   const startRow = Math.floor((ROWS - miningArea) / 2);
+  visibleStart = { row: startRow, col: startCol };
 
   for (let r = 0; r < ROWS; r++) {
     for (let c = 0; c < COLS; c++) {
@@ -96,12 +109,19 @@ function buildGrid() {
       const visible = r >= startRow && r < startRow + miningArea && c >= startCol && c < startCol + miningArea;
       cell.style.display = visible ? 'block' : 'none';
       cell.dataset.visible = visible ? '1' : '0';
+      cell.dataset.row = r;
+      cell.dataset.col = c;
       cell.onclick = () => clickPixel(cell);
       grid.appendChild(cell);
     }
   }
 
   updateProgress();
+  detectSquares();
+}
+
+function refreshTempFilled() {
+  tempFilled = $$('#grid .cell.filled[data-visible="1"]').length;
 }
 
 function clickPixel(cell) {
@@ -110,6 +130,7 @@ function clickPixel(cell) {
   tempFilled++;
   updateProgress();
   checkComplete();
+  detectSquares();
 }
 
 function checkComplete() {
@@ -122,23 +143,92 @@ function checkComplete() {
   }
 }
 
+function detectSquares() {
+  activeSquares = [];
+  $$('#grid .cell.square-highlight').forEach(c => c.classList.remove('square-highlight'));
+
+  const matrix = Array.from({ length: miningArea }, () => Array(miningArea).fill(0));
+  const visibleCells = $$('#grid .cell[data-visible="1"]');
+  visibleCells.forEach(cell => {
+    const r = Number(cell.dataset.row) - visibleStart.row;
+    const c = Number(cell.dataset.col) - visibleStart.col;
+    if (r >= 0 && c >= 0 && r < miningArea && c < miningArea) {
+      matrix[r][c] = cell.classList.contains('filled') ? 1 : 0;
+    }
+  });
+
+  const pre = Array.from({ length: miningArea + 1 }, () => Array(miningArea + 1).fill(0));
+  for (let r = 0; r < miningArea; r++) {
+    for (let c = 0; c < miningArea; c++) {
+      pre[r + 1][c + 1] = matrix[r][c] + pre[r][c + 1] + pre[r + 1][c] - pre[r][c];
+    }
+  }
+
+  const getSum = (r1, c1, r2, c2) => pre[r2][c2] - pre[r1][c2] - pre[r2][c1] + pre[r1][c1];
+
+  const squares = [];
+  for (let size = 2; size <= miningArea; size++) {
+    for (let r = 0; r <= miningArea - size; r++) {
+      for (let c = 0; c <= miningArea - size; c++) {
+        const sum = getSum(r, c, r + size, c + size);
+        if (sum === size * size) {
+          squares.push({ row: r + visibleStart.row, col: c + visibleStart.col, size });
+        }
+      }
+    }
+  }
+
+  squares.forEach(sq => {
+    for (let r = sq.row; r < sq.row + sq.size; r++) {
+      for (let c = sq.col; c < sq.col + sq.size; c++) {
+        const cell = getCell(r, c);
+        cell.classList.add('square-highlight');
+      }
+    }
+  });
+
+  activeSquares = squares;
+}
+
 // CONTEXT MENU
 window.addEventListener('contextmenu', e => {
   const miningActive = screens.mining.classList.contains('active');
   if (!miningActive) return;
   e.preventDefault();
+  const targetCell = e.target.closest('.cell[data-visible="1"]');
+  const ctx = $('#ctxMenu');
+  ctx.classList.add('hidden');
 
-  const filled = $$('#grid .cell.filled[data-visible="1"]').length;
+  let menuBuilt = false;
 
-  if (filled === totalVisibleCells) {
-    const ctx = $('#ctxMenu');
-    ctx.classList.remove('hidden');
-    ctx.style.left = e.pageX + 'px';
-    ctx.style.top = e.pageY + 'px';
-    ctx.innerHTML = `
-      <button onclick="mineArea()">${txt[lang].mineArea} ${miningArea}×${miningArea}</button>
-      <button onclick="showShop()">${txt[lang].shop}</button>
-    `;
+  if (targetCell) {
+    const row = Number(targetCell.dataset.row);
+    const col = Number(targetCell.dataset.col);
+    const square = activeSquares.find(s => row >= s.row && row < s.row + s.size && col >= s.col && col < s.col + s.size);
+    if (square) {
+      selectedSquare = square;
+      ctx.classList.remove('hidden');
+      ctx.style.left = e.pageX + 'px';
+      ctx.style.top = e.pageY + 'px';
+      ctx.innerHTML = `
+        <button onclick="mineSquare()">${txt[lang].mine} ${square.size}×${square.size}</button>
+        <button onclick="showShop()">🛍️ ${txt[lang].shop}</button>
+      `;
+      menuBuilt = true;
+    }
+  }
+
+  if (!menuBuilt) {
+    const filled = $$('#grid .cell.filled[data-visible="1"]').length;
+    if (filled === totalVisibleCells) {
+      ctx.classList.remove('hidden');
+      ctx.style.left = e.pageX + 'px';
+      ctx.style.top = e.pageY + 'px';
+      ctx.innerHTML = `
+        <button onclick="mineArea()">${txt[lang].mineArea} ${miningArea}×${miningArea}</button>
+        <button onclick="showShop()">🛍️ ${txt[lang].shop}</button>
+      `;
+    }
   }
 });
 
@@ -146,10 +236,30 @@ window.mineArea = () => {
   const reward = miningArea * miningArea;
   bloqcoins += reward;
   tempFilled = 0;
-  $$('.cell').forEach(c => c.classList.remove('filled', 'highlight'));
+  $$('.cell').forEach(c => c.classList.remove('filled', 'highlight', 'square-highlight'));
   $('#ctxMenu').classList.add('hidden');
   updateProgress();
   buildGrid();
+};
+
+window.mineSquare = () => {
+  if (!selectedSquare) return;
+  const area = selectedSquare.size * selectedSquare.size;
+  const reward = Number((area * BLOQCOIN_PER_PIXEL).toFixed(4));
+  bloqcoins += reward;
+
+  for (let r = selectedSquare.row; r < selectedSquare.row + selectedSquare.size; r++) {
+    for (let c = selectedSquare.col; c < selectedSquare.col + selectedSquare.size; c++) {
+      const cell = getCell(r, c);
+      cell.classList.remove('filled', 'square-highlight', 'highlight');
+    }
+  }
+
+  $('#ctxMenu').classList.add('hidden');
+  selectedSquare = null;
+  refreshTempFilled();
+  updateProgress();
+  detectSquares();
 };
 
 window.showShop = () => {
@@ -175,7 +285,7 @@ function updateProgress() {
   $('#totalBlocks').textContent = minedBlocks;
   $('#blockits').textContent = bloqcoins;
   $('#progress').textContent = percent + '%';
-  $('#counters').textContent = `${txt[lang].blocksText}: ${minedBlocks} | ${txt[lang].blockitsText}: ${bloqcoins}`;
+  $('#counters').textContent = `${txt[lang].blocksText}: ${minedBlocks} | ${txt[lang].blockitsText}: ${bloqcoins.toFixed(2)}`;
 }
 
 document.addEventListener('mousemove', e => {
@@ -209,3 +319,4 @@ document.addEventListener('keydown', e => {
 // INIT
 
 updateLang();
+
