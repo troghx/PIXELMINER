@@ -15,6 +15,7 @@ let totalVisibleCells = miningArea * miningArea;
 let activeSquares = [];
 let visibleStart = { row: 0, col: 0 };
 let selectedSquare = null;
+let squareHighlightTimeout = null;
 
 const txt = {
   es: {
@@ -145,7 +146,7 @@ function checkComplete() {
 
 function detectSquares() {
   activeSquares = [];
-  $$('#grid .cell.square-highlight').forEach(c => c.classList.remove('square-highlight'));
+  clearSquareHighlights();
 
   const matrix = Array.from({ length: miningArea }, () => Array(miningArea).fill(0));
   const visibleCells = $$('#grid .cell[data-visible="1"]');
@@ -178,16 +179,40 @@ function detectSquares() {
     }
   }
 
+  highlightSquareBorders(squares);
+  activeSquares = squares;
+}
+
+function clearSquareHighlights() {
+  if (squareHighlightTimeout) {
+    clearTimeout(squareHighlightTimeout);
+    squareHighlightTimeout = null;
+  }
+  $$('#grid .cell.square-highlight').forEach(c => c.classList.remove('square-highlight'));
+}
+
+function highlightSquareBorders(squares) {
+  if (!squares.length) return;
+
+  const cells = new Set();
+
   squares.forEach(sq => {
     for (let r = sq.row; r < sq.row + sq.size; r++) {
       for (let c = sq.col; c < sq.col + sq.size; c++) {
-        const cell = getCell(r, c);
-        cell.classList.add('square-highlight');
+        if (r === sq.row || r === sq.row + sq.size - 1 || c === sq.col || c === sq.col + sq.size - 1) {
+          cells.add(`${r},${c}`);
+        }
       }
     }
   });
 
-  activeSquares = squares;
+  cells.forEach(key => {
+    const [r, c] = key.split(',').map(Number);
+    const cell = getCell(r, c);
+    if (cell) cell.classList.add('square-highlight');
+  });
+
+  squareHighlightTimeout = setTimeout(clearSquareHighlights, 2000);
 }
 
 // CONTEXT MENU
@@ -319,4 +344,5 @@ document.addEventListener('keydown', e => {
 // INIT
 
 updateLang();
+
 
