@@ -73,6 +73,16 @@ button:hover { background: #45a049; }
 .cell:hover { background: #ccc; }
 .cell.filled { background: #4CAF50; }
 .cell.highlight { outline: 2px solid yellow; }
+.cell.square-highlight {
+  box-shadow: 0 0 0 2px #ffeb3b inset, 0 0 6px 2px #ffeb3b;
+  animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+  0% { box-shadow: 0 0 0 2px #ffeb3b inset, 0 0 6px 2px #ffeb3b; }
+  50% { box-shadow: 0 0 0 2px #ffc107 inset, 0 0 10px 4px #ffc107; }
+  100% { box-shadow: 0 0 0 2px #ffeb3b inset, 0 0 6px 2px #ffeb3b; }
+}
 
 .ctx {
   position: absolute;
@@ -93,4 +103,5 @@ button:hover { background: #45a049; }
   border-radius: 3px;
   pointer-events: none;
   z-index: 50;
+
 }
