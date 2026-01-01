@@ -2,48 +2,47 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Pixel Miner</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Fusionador de Archivos</title>
   <link rel="stylesheet" href="styles.css" />
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet" />
 </head>
 <body>
+  <main class="welcome">
+    <header class="welcome__header">
+      <p class="welcome__pill">Nuevo proyecto</p>
+      <h1 class="welcome__title">Fusiona archivos de texto sin complicaciones</h1>
+      <p class="welcome__subtitle">
+        Elige el entorno con el que te sientas más identificado y prepara tus merges.
+        Más adelante podrás iniciar sesión para guardar tu historial.
+      </p>
+    </header>
 
-  <!-- LOGIN -->
-  <section id="loginScreen" class="screen active">
-    <h1 id="loginTitle">Pixel Miner</h1>
-    <img id="guideChar" class="guide" src="guide_character_normal.png" alt="Guía" />
-    <form id="loginForm">
-      <input type="text" id="userField" placeholder="Usuario" required />
-      <input type="password" id="passField" placeholder="Contraseña" required />
-      <label>
-        <input type="checkbox" id="showPass" /> <span id="showPassText">Mostrar contraseña</span>
-      </label>
-      <button type="submit" id="loginBtn">Iniciar sesión</button>
-    </form>
-    <button id="langBtn" class="lang">🌐</button>
-  </section>
+    <section class="options">
+      <article class="option-card" data-game="gta">
+        <div class="option-card__image option-card__image--gta" aria-hidden="true"></div>
+        <div class="option-card__content">
+          <h2>GTA V</h2>
+          <p>Interfaz ágil para mezclar archivos inspirada en Los Santos.</p>
+          <button class="option-card__button" data-action="select">Elegir GTA V</button>
+        </div>
+      </article>
 
-  <!-- WALLET -->
-  <section id="walletScreen" class="screen">
-    <h1 id="walletTitle">Pixel Miner</h1>
-    <img id="guideCharW" class="guide small" src="guide_character_normal.png" alt="Guía" />
-    <div class="wallet">
-      <h2 id="walletLabel">Cartera</h2>
-      <p><span class="icon block"></span> <span id="totalBlocksText">Bloques minados</span>: <span id="totalBlocks">0</span></p>
-      <p><span class="icon blocky"></span> <span id="blockitsText">Bloqcoins</span>: <span id="blockits">0</span></p>
-      <button id="mineBtn">MINAR</button>
-    </div>
-    <button id="langBtnW" class="lang">🌐</button>
-  </section>
+      <article class="option-card" data-game="rdr2">
+        <div class="option-card__image option-card__image--rdr2" aria-hidden="true"></div>
+        <div class="option-card__content">
+          <h2>Red Dead Redemption 2</h2>
+          <p>Un estilo más sereno para organizar y fusionar tus textos.</p>
+          <button class="option-card__button" data-action="select">Elegir Red Dead Redemption 2</button>
+        </div>
+      </article>
+    </section>
 
-  <!-- MINING -->
-  <section id="miningScreen" class="screen">
-    <div id="grid"></div>
-    <div id="ctxMenu" class="ctx hidden"></div>
-    <div id="progress">0.00%</div>
-    <div id="counters">Bloque: 0 | Bloqcoins: 0</div>
-  </section>
+    <footer class="welcome__footer">
+      <button class="ghost" id="loginTrigger">Iniciar sesión para guardar historial</button>
+      <p class="selection" id="selectionText">Aún no has seleccionado un entorno.</p>
+    </footer>
+  </main>
 
   <script src="script.js"></script>
 </body>
