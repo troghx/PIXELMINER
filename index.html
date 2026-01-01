@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Fusionador de Archivos</title>
   <link rel="stylesheet" href="styles.css" />
-  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=JetBrains+Mono:wght@400;600&family=Press+Start+2P&display=swap" rel="stylesheet" />
 </head>
 <body>
   <main class="welcome">
@@ -18,23 +18,13 @@
       </p>
     </header>
 
-    <section class="options">
-      <article class="option-card" data-game="gta">
-        <div class="option-card__image option-card__image--gta" aria-hidden="true"></div>
-        <div class="option-card__content">
-          <h2>GTA V</h2>
-          <p>Interfaz ágil para mezclar archivos inspirada en Los Santos.</p>
-          <button class="option-card__button" data-action="select">Elegir GTA V</button>
-        </div>
+    <section class="options" aria-label="Selecciona tu estilo de juego">
+      <article class="option-card option-card--gta" data-game="gta" tabindex="0" role="button" aria-pressed="false">
+        <span class="option-card__tag">GTA V</span>
       </article>
 
-      <article class="option-card" data-game="rdr2">
-        <div class="option-card__image option-card__image--rdr2" aria-hidden="true"></div>
-        <div class="option-card__content">
-          <h2>Red Dead Redemption 2</h2>
-          <p>Un estilo más sereno para organizar y fusionar tus textos.</p>
-          <button class="option-card__button" data-action="select">Elegir Red Dead Redemption 2</button>
-        </div>
+      <article class="option-card option-card--rdr2" data-game="rdr2" tabindex="0" role="button" aria-pressed="false">
+        <span class="option-card__tag">Red Dead Redemption 2</span>
       </article>
     </section>
 
@@ -42,6 +32,62 @@
       <button class="ghost" id="loginTrigger">Iniciar sesión para guardar historial</button>
       <p class="selection" id="selectionText">Aún no has seleccionado un entorno.</p>
     </footer>
+
+    <section class="workspace" id="workspace" aria-label="Área de edición">
+      <header class="workspace__header">
+        <p class="workspace__pill" id="workspacePill">Ventanas listas para tus merges</p>
+        <h2 class="workspace__title">Ventanas de edición paralelas</h2>
+        <p class="workspace__subtitle">
+          Arrastra o sube archivos .xml, .txt u otros de texto. Pega y revisa con numeración a ambos lados, minimapa y desplazamiento inspirado en editores como Visual Studio Code.
+        </p>
+      </header>
+
+      <div class="editor-grid">
+        <div class="editor-panel">
+          <div class="panel__head">
+            <div>
+              <p class="panel__eyebrow">Ventana izquierda</p>
+              <h3 class="panel__title">Panel A</h3>
+            </div>
+            <label class="upload">
+              <input type="file" class="file-input" data-target="left" accept=".txt,.xml,text/*,application/xml" />
+              <span>Subir archivo (.txt, .xml o texto)</span>
+            </label>
+          </div>
+
+          <div class="editor-shell" data-editor="left">
+            <pre class="line-numbers line-numbers--left" aria-hidden="true"></pre>
+            <textarea class="editor-input" data-editor-target="left" placeholder="Pega o escribe aquí tu texto"></textarea>
+            <pre class="line-numbers line-numbers--right" aria-hidden="true"></pre>
+            <div class="editor-minimap" data-minimap="left" aria-hidden="true">
+              <span class="minimap-thumb"></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="editor-panel">
+          <div class="panel__head">
+            <div>
+              <p class="panel__eyebrow">Ventana derecha</p>
+              <h3 class="panel__title">Panel B</h3>
+            </div>
+            <label class="upload">
+              <input type="file" class="file-input" data-target="right" accept=".txt,.xml,text/*,application/xml" />
+              <span>Subir archivo (.txt, .xml o texto)</span>
+            </label>
+          </div>
+
+          <div class="editor-shell" data-editor="right">
+            <pre class="line-numbers line-numbers--left" aria-hidden="true"></pre>
+            <textarea class="editor-input" data-editor-target="right" placeholder="Pega o escribe aquí tu texto"></textarea>
+            <pre class="line-numbers line-numbers--right" aria-hidden="true"></pre>
+            <div class="editor-minimap" data-minimap="right" aria-hidden="true">
+              <span class="minimap-thumb"></span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
   </main>
 
   <script src="script.js"></script>
