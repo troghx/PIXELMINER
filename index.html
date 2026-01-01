@@ -21,6 +21,11 @@
       </div>
     </header>
 
+    <div class="match-banner" aria-live="polite">
+      <p class="match-banner__label">Coincidencia</p>
+      <p class="match-banner__value" id="matchValue">0%</p>
+    </div>
+
     <section class="diff-grid" aria-label="Área de comparación">
       <article class="panel" data-side="left">
         <div class="panel__top">
@@ -31,30 +36,16 @@
           </label>
         </div>
         <div class="editor-shell" data-editor="left">
-          <pre class="line-numbers line-numbers--left" aria-hidden="true"></pre>
-          <textarea class="editor-input" data-editor-target="left" placeholder="Pega o escribe aquí"></textarea>
-          <pre class="line-numbers line-numbers--right" aria-hidden="true"></pre>
+          <div class="line-numbers line-numbers--left" aria-hidden="true"></div>
+          <div class="editor-area">
+            <div class="line-highlights" aria-hidden="true"></div>
+            <textarea class="editor-input" data-editor-target="left" placeholder="Pega o escribe aquí"></textarea>
+          </div>
+          <div class="line-numbers line-numbers--right" aria-hidden="true"></div>
           <div class="editor-minimap" data-minimap="left" aria-hidden="true">
             <span class="minimap-thumb"></span>
           </div>
         </div>
-      </article>
-
-      <article class="merge-rail" aria-label="Controles de merge">
-        <div class="stat">
-          <p class="stat__label">Coincidencia</p>
-          <div class="stat__bar">
-            <span class="stat__fill" id="matchFill"></span>
-          </div>
-          <p class="stat__value" id="matchValue">0%</p>
-        </div>
-
-        <div class="rail__controls">
-          <button class="chip" id="quickMerge" aria-label="Actualizar merge">Actualizar</button>
-          <button class="chip chip--ghost" id="copyMerged" aria-label="Copiar resultado">Copiar</button>
-        </div>
-
-        <div class="conflicts" id="conflictList" aria-live="polite"></div>
       </article>
 
       <article class="panel" data-side="right">
@@ -66,9 +57,12 @@
           </label>
         </div>
         <div class="editor-shell" data-editor="right">
-          <pre class="line-numbers line-numbers--left" aria-hidden="true"></pre>
-          <textarea class="editor-input" data-editor-target="right" placeholder="Pega o escribe aquí"></textarea>
-          <pre class="line-numbers line-numbers--right" aria-hidden="true"></pre>
+          <div class="line-numbers line-numbers--left" aria-hidden="true"></div>
+          <div class="editor-area">
+            <div class="line-highlights" aria-hidden="true"></div>
+            <textarea class="editor-input" data-editor-target="right" placeholder="Pega o escribe aquí"></textarea>
+          </div>
+          <div class="line-numbers line-numbers--right" aria-hidden="true"></div>
           <div class="editor-minimap" data-minimap="right" aria-hidden="true">
             <span class="minimap-thumb"></span>
           </div>
@@ -76,13 +70,12 @@
       </article>
     </section>
 
+    <div class="conflicts" id="conflictList" aria-live="polite"></div>
+
     <section class="merge-output" aria-label="Resultado del merge">
-      <div class="merge-output__head">
-        <span class="merge-output__label">Resultado generado</span>
-        <div class="merge-output__actions">
-          <button class="chip" id="sendLeft" aria-label="Enviar resultado al panel izquierdo">Enviar a A</button>
-          <button class="chip" id="sendRight" aria-label="Enviar resultado al panel derecho">Enviar a B</button>
-        </div>
+      <div class="merge-output__actions">
+        <button class="chip" id="quickMerge" aria-label="Actualizar merge">Actualizar</button>
+        <button class="chip chip--ghost" id="copyMerged" aria-label="Copiar resultado">Copiar</button>
       </div>
       <textarea id="mergedOutput" class="merge-output__textarea" readonly placeholder="El merge inteligente se mostrará aquí"></textarea>
     </section>
@@ -90,4 +83,5 @@
 
   <script src="script.js"></script>
 </body>
+
 </html>
