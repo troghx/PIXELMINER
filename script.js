@@ -6,28 +6,52 @@ const swapButton = document.getElementById('swapTexts');
 const clearButton = document.getElementById('clearAll');
 const mergedOutput = document.getElementById('mergedOutput');
 const copyMerged = document.getElementById('copyMerged');
-const sendLeft = document.getElementById('sendLeft');
-const sendRight = document.getElementById('sendRight');
-const matchFill = document.getElementById('matchFill');
 const matchValue = document.getElementById('matchValue');
 const conflictList = document.getElementById('conflictList');
 
 let lastConflicts = [];
 
-function buildLineNumbers(value) {
-  const lines = value.split('\n').length || 1;
-  let content = '';
-  for (let i = 1; i <= lines; i += 1) {
-    content += `${i}\n`;
+function computeVisualDiff(leftText, rightText) {
+  const leftLines = leftText.split('\n');
+  const rightLines = rightText.split('\n');
+  const maxLen = Math.max(leftLines.length, rightLines.length, 1);
+  const entries = [];
+
+  for (let i = 0; i < maxLen; i += 1) {
+    const hasLeft = i < leftLines.length;
+    const hasRight = i < rightLines.length;
+    const leftLine = hasLeft ? leftLines[i] : '';
+    const rightLine = hasRight ? rightLines[i] : '';
+
+    let leftStatus = 'match';
+    let rightStatus = 'match';
+
+    if (hasLeft && hasRight) {
+      if (leftLine !== rightLine) {
+        leftStatus = 'diff';
+        rightStatus = 'diff';
+      }
+    } else if (hasLeft) {
+      leftStatus = 'diff';
+      rightStatus = 'ghost';
+    } else if (hasRight) {
+      leftStatus = 'ghost';
+      rightStatus = 'diff';
+    }
+
+    entries.push({ index: i, leftLine, rightLine, leftStatus, rightStatus });
   }
-  return content;
+
+  return { entries, leftLines, rightLines };
 }
 
 function syncScroll(shell, textarea) {
   const left = shell.querySelector('.line-numbers--left');
   const right = shell.querySelector('.line-numbers--right');
+  const highlights = shell.querySelector('.line-highlights');
   if (left) left.scrollTop = textarea.scrollTop;
   if (right) right.scrollTop = textarea.scrollTop;
+  if (highlights) highlights.style.transform = `translateY(${-textarea.scrollTop}px)`;
 }
 
 function updateMinimap(shell, textarea) {
@@ -76,23 +100,105 @@ function attachMinimap(shell, textarea) {
       minimap.removeEventListener('pointercancel', upHandler);
     };
     minimap.addEventListener('pointermove', moveHandler);
-    minimap.addEventListener('pointerup', upHandler);
     minimap.addEventListener('pointercancel', upHandler);
   });
 }
 
-function refreshEditor(shell) {
-  const textarea = shell.querySelector('.editor-input');
+function renderLineNumbers(shell, entries, side) {
   const left = shell.querySelector('.line-numbers--left');
   const right = shell.querySelector('.line-numbers--right');
-  if (!textarea || !left || !right) return;
+  if (!left || !right) return;
 
-  const content = textarea.value || '';
-  const numbers = buildLineNumbers(content);
-  left.textContent = numbers;
-  right.textContent = numbers;
+  left.innerHTML = '';
+  right.innerHTML = '';
+
+  entries.forEach((row, idx) => {
+    const status = row[`${side}Status`];
+    const number = document.createElement('span');
+    number.className = 'line-number';
+    if (status === 'ghost') number.classList.add('line-number--ghost');
+    if (status === 'diff') number.classList.add('line-number--diff');
+    number.textContent = idx + 1;
+    left.appendChild(number);
+
+    const note = document.createElement('span');
+    note.className = 'line-number';
+    if (status === 'ghost') {
+      note.classList.add('line-number--ghost');
+      note.textContent = row[side === 'left' ? 'rightLine' : 'leftLine'] || '∅';
+    } else if (status === 'diff') {
+      note.classList.add('line-number--diff');
+      note.textContent = '≠';
+    } else {
+      note.textContent = '';
+    }
+    right.appendChild(note);
+  });
+}
+
+function renderHighlights(shell, diff, side) {
+  const textarea = shell.querySelector('.editor-input');
+  const highlights = shell.querySelector('.line-highlights');
+  if (!textarea || !highlights) return;
+
+  const styles = getComputedStyle(textarea);
+  if (!textarea.dataset.basePaddingTop) textarea.dataset.basePaddingTop = styles.paddingTop;
+  if (!textarea.dataset.basePaddingBottom) textarea.dataset.basePaddingBottom = styles.paddingBottom;
+
+  const lineHeight = parseFloat(styles.lineHeight) || 24;
+  const paddingTop = parseFloat(textarea.dataset.basePaddingTop) || 16;
+  const paddingBottomBase = parseFloat(textarea.dataset.basePaddingBottom) || 16;
+
+  const sideLines = side === 'left' ? diff.leftLines.length : diff.rightLines.length;
+  const extraLines = Math.max(diff.entries.length - sideLines, 0);
+  const newPaddingBottom = paddingBottomBase + extraLines * lineHeight;
+  textarea.style.paddingBottom = `${newPaddingBottom}px`;
+
+  highlights.innerHTML = '';
+  const totalHeight = paddingTop + newPaddingBottom + diff.entries.length * lineHeight;
+  highlights.style.height = `${totalHeight}px`;
+
+  diff.entries.forEach(row => {
+    const status = row[`${side}Status`];
+    if (status === 'match') return;
+    const top = paddingTop + row.index * lineHeight;
+    const segment = document.createElement('div');
+    segment.className = 'line-highlight';
+    segment.style.top = `${top}px`;
+    segment.style.height = `${lineHeight}px`;
+    if (status === 'ghost') {
+      segment.classList.add('line-highlight--ghost');
+      segment.textContent = side === 'left' ? row.rightLine : row.leftLine;
+    }
+    highlights.appendChild(segment);
+  });
+
   syncScroll(shell, textarea);
   updateMinimap(shell, textarea);
+}
+
+function refreshEditor(shell, diff) {
+  const textarea = shell.querySelector('.editor-input');
+  if (!textarea || !diff) return;
+
+  const side = shell.dataset.editor;
+  renderLineNumbers(shell, diff.entries, side);
+  renderHighlights(shell, diff, side);
+}
+
+function getEditorTexts() {
+  const left = document.querySelector('.editor-input[data-editor-target="left"]')?.value ?? '';
+  const right = document.querySelector('.editor-input[data-editor-target="right"]')?.value ?? '';
+  return { left, right };
+}
+
+function refreshDiffViews(diff) {
+  let data = diff;
+  if (!data) {
+    const { left, right } = getEditorTexts();
+    data = computeVisualDiff(left, right);
+  }
+  document.querySelectorAll('.editor-shell').forEach(shell => refreshEditor(shell, data));
 }
 
 function debounce(fn, delay = 260) {
@@ -302,18 +408,17 @@ function applyConflictChoice(conflict, choice) {
 
 function renderScore(score) {
   matchValue.textContent = `${score}%`;
-  matchFill.style.width = `${score}%`;
 }
 
 function executeMerge(pulse = true) {
-  const left = document.querySelector('.editor-input[data-editor-target="left"]')?.value ?? '';
-  const right = document.querySelector('.editor-input[data-editor-target="right"]')?.value ?? '';
-
+  const { left, right } = getEditorTexts();
+  const diff = computeVisualDiff(left, right);
   const { merged, conflicts, score } = smartMerge(left, right);
   mergedOutput.value = merged;
   lastConflicts = conflicts;
   renderConflicts(conflicts);
   renderScore(score);
+  refreshDiffViews(diff);
 
   if (pulse) {
     mergedOutput.classList.add('pulse');
@@ -328,7 +433,7 @@ editorInputs.forEach(textarea => {
   if (!shell) return;
 
   textarea.addEventListener('input', () => {
-    refreshEditor(shell);
+    refreshDiffViews();
     autoMerge();
   });
   textarea.addEventListener('scroll', () => {
@@ -337,7 +442,6 @@ editorInputs.forEach(textarea => {
   });
 
   attachMinimap(shell, textarea);
-  refreshEditor(shell);
 });
 
 fileInputs.forEach(input => {
@@ -353,7 +457,7 @@ fileInputs.forEach(input => {
     const reader = new FileReader();
     reader.onload = e => {
       textarea.value = e.target?.result ?? '';
-      refreshEditor(shell);
+      refreshDiffViews();
       executeMerge();
     };
     reader.readAsText(file);
@@ -370,42 +474,23 @@ swapButton?.addEventListener('click', () => {
   const temp = left.value;
   left.value = right.value;
   right.value = temp;
-  document.querySelectorAll('.editor-shell').forEach(shell => refreshEditor(shell));
+  refreshDiffViews();
   executeMerge();
 });
 
 clearButton?.addEventListener('click', () => {
   editorInputs.forEach(textarea => {
     textarea.value = '';
-    const shell = textarea.closest('.editor-shell');
-    if (shell) refreshEditor(shell);
   });
   mergedOutput.value = '';
   renderScore(0);
   renderConflicts([]);
+  refreshDiffViews();
 });
 
 copyMerged?.addEventListener('click', async () => {
   if (!navigator.clipboard) return;
   await navigator.clipboard.writeText(mergedOutput.value ?? '');
-});
-
-sendLeft?.addEventListener('click', () => {
-  const textarea = document.querySelector('.editor-input[data-editor-target="left"]');
-  if (!textarea) return;
-  textarea.value = mergedOutput.value;
-  const shell = textarea.closest('.editor-shell');
-  if (shell) refreshEditor(shell);
-  executeMerge(false);
-});
-
-sendRight?.addEventListener('click', () => {
-  const textarea = document.querySelector('.editor-input[data-editor-target="right"]');
-  if (!textarea) return;
-  textarea.value = mergedOutput.value;
-  const shell = textarea.closest('.editor-shell');
-  if (shell) refreshEditor(shell);
-  executeMerge(false);
 });
 
 executeMerge(false);
